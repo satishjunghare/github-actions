@@ -1,0 +1,33 @@
+name: Deploy to dev server
+
+on:
+  push:
+    branches:
+      - beta
+
+jobs:
+  deploy:
+    run-on: ubuntu-latest
+
+    steps:
+    # Step 1: checkout the code
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    # Step 2: setup ssh agent
+    - name: Set up ssh agent
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.DEPLOYMENT_KEY }}
+    
+    # Step 3: Deploy the code to dev server
+    - name: Deploy to dev server
+      run: |
+        ssh root@147.79.67.97 "
+        cd /var/www/github-actions &&
+        git pull origin beta &&
+        composer install --no-interaction --prefer-dist --optimize-autoloader &&
+        php artisan config:cache &&
+        php artisan route:cache &&
+        php artisan view:cache
+        "
