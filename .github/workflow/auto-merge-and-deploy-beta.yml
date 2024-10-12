@@ -1,0 +1,43 @@
+name: Auto merge feature changes to beta and Deploy
+
+on:
+  push:
+    branches:
+      - feature_branch
+
+jobs:
+  # Job 1: Merge feature branch into beta
+  merge-and-deploy:
+    run-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # Step 2: Configure git to allow automatic merge
+      - name: Configure git
+        run: |
+          git config --global user.name "satishjunghare"
+          git config --global user.email "satish8264@gmail.com"
+      
+      # Step 3: Merge feature_branch into beta
+      - name: Merge feature_branch into beta
+        run: |
+          git checkout beta
+          git merge feature_branch --no-ff
+          git push origin beta
+      
+      # Step 4: Setup SSH to deploy dev server
+      - name: Setup SSH to deploy dev server
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.DEPLOYMENT_KEY }}
+      
+      # Step 5: Deploy to Dev Server
+      - name: Deploy to Dev Server
+        run: |
+          ssh root@147.79.67.97 "
+          cd /var/www/github-actions &&
+          git pull origin beta
+          "
